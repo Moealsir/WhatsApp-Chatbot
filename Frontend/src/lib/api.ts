@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://wb.msuliman.tech/api";
+  process.env.NEXT_PUBLIC_API_URL || "/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -119,4 +119,3 @@ api.interceptors.response.use(
     return Promise.reject(new Error(message));
   }
 );
-
