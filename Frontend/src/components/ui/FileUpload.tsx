@@ -20,25 +20,26 @@ export default function FileUpload({
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string>("");
 
-  const validateFile = (file: File): string | null => {
-    if (file.size > maxSize * 1024 * 1024) {
-      return `File size must be less than ${maxSize}MB`;
-    }
-    return null;
-  };
-
   const handleFileSelect = useCallback(
-    (file: File) => {
-      const validationError = validateFile(file);
-      if (validationError) {
-        setError(validationError);
-        return;
+  (file: File) => {
+    const validateFile = (file: File): string | null => {
+      if (file.size > maxSize * 1024 * 1024) {
+        return `File size must be less than ${maxSize}MB`;
       }
-      setError("");
-      onFileSelect(file);
-    },
-    [maxSize, onFileSelect]
-  );
+      return null;
+    };
+
+    const validationError = validateFile(file);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+    setError("");
+    onFileSelect(file);
+  },
+  [maxSize, onFileSelect]
+);
+
 
   const handleDragOver = useCallback(
     (e: React.DragEvent) => {
@@ -197,3 +198,4 @@ export default function FileUpload({
     </div>
   );
 }
+

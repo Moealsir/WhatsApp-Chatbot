@@ -8,151 +8,16 @@ import { ToastContainer } from "@/components/ui/Toast";
 import { useToast } from "@/hooks/useToast";
 import { whatsappApi, WhatsAppSession } from "@/lib/api";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 // Modern card component inspired by reactbits.dev
-function StatsCard({
-  title,
-  value,
-  icon,
-  color,
-  trend,
-  description,
-}: {
-  title: string;
-  value: number;
-  icon: string;
-  color: string;
-  trend?: { direction: "up" | "down" | "stable"; percentage: number };
-  description: string;
-}) {
-  const colorClasses = {
-    blue: "from-blue-500/20 to-cyan-500/20 border-blue-500/30",
-    green: "from-green-500/20 to-emerald-500/20 border-green-500/30",
-    yellow: "from-yellow-500/20 to-orange-500/20 border-yellow-500/30",
-    red: "from-red-500/20 to-pink-500/20 border-red-500/30",
-  };
 
-  return (
-    <div
-      className={`card-hover bg-gradient-to-br ${
-        colorClasses[color as keyof typeof colorClasses]
-      } rounded-xl p-6 hover-lift`}
-    >
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <div className="flex items-center space-x-3 mb-3">
-            <div className="text-2xl">{icon}</div>
-            <h3 className="text-sm font-medium text-gray-400">{title}</h3>
-          </div>
-          <div className="flex items-baseline space-x-2">
-            <p className="text-3xl font-bold text-white">{value}</p>
-            {trend && (
-              <span
-                className={`text-sm font-medium ${
-                  trend.direction === "up"
-                    ? "text-green-400"
-                    : trend.direction === "down"
-                    ? "text-red-400"
-                    : "text-gray-400"
-                }`}
-              >
-                {trend.direction === "up"
-                  ? "↗"
-                  : trend.direction === "down"
-                  ? "↘"
-                  : "→"}{" "}
-                {trend.percentage}%
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-gray-500 mt-2">{description}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // Action card component
-function ActionCard({
-  title,
-  description,
-  icon,
-  href,
-  gradient,
-  badge,
-}: {
-  title: string;
-  description: string;
-  icon: string;
-  href: string;
-  gradient: string;
-  badge?: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="group relative overflow-hidden bg-[#161b22] border border-[#21262d] rounded-xl p-6 hover-lift card-hover transition-all duration-300"
-    >
-      <div
-        className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}
-      ></div>
-      <div className="relative z-10">
-        <div className="flex items-start justify-between mb-4">
-          <div
-            className={`w-12 h-12 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center text-white text-xl`}
-          >
-            {icon}
-          </div>
-          {badge && (
-            <span className="px-2 py-1 text-xs font-medium bg-blue-500/20 text-blue-400 rounded-full border border-blue-500/30">
-              {badge}
-            </span>
-          )}
-        </div>
-        <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-blue-400 transition-colors">
-          {title}
-        </h3>
-        <p className="text-sm text-gray-400 leading-relaxed">{description}</p>
-        <div className="mt-4 flex items-center text-blue-400 text-sm font-medium">
-          Get started
-          <svg
-            className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        </div>
-      </div>
-    </Link>
-  );
-}
+
 
 // Activity indicator component
-function ActivityIndicator({ sessions }: { sessions: WhatsAppSession[] }) {
-  const recentActivity =
-    sessions.filter((s) => s.status === "ready").length > 0;
 
-  return (
-    <div className="flex items-center space-x-2">
-      <div
-        className={`w-2 h-2 rounded-full ${
-          recentActivity ? "bg-green-500 animate-pulse" : "bg-gray-500"
-        }`}
-      ></div>
-      <span className="text-xs text-gray-400">
-        {recentActivity ? "Active sessions detected" : "No active sessions"}
-      </span>
-    </div>
-  );
-}
 
 export default function Dashboard() {
   const [sessions, setSessions] = useState<WhatsAppSession[]>([]);
@@ -162,13 +27,40 @@ export default function Dashboard() {
 
   const { toasts, removeToast, success, error: showError } = useToast();
 
+  const loadSessions = useCallback(async () => {
+  try {
+    if (!loading) setLoading(true);
+    setError("");
+
+    const response = await whatsappApi.getAllSessions();
+
+    if (response.success && response.data) {
+      setSessions(response.data);
+      if (!loading) {
+        success("Sessions refreshed", "Data updated successfully");
+      }
+    } else {
+      const errorMsg = response.error || "Failed to load sessions";
+      setError(errorMsg);
+      showError("Failed to load sessions", errorMsg);
+    }
+  } catch (err) {
+    const errorMsg =
+      err instanceof Error ? err.message : "Failed to load sessions";
+    setError(errorMsg);
+    showError("Connection error", errorMsg);
+  } finally {
+    setLoading(false);
+  }
+}, [loading, success, showError]);
+
   useEffect(() => {
     loadSessions();
 
     // Auto-refresh every 30 seconds
     const interval = setInterval(loadSessions, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [loadSessions]);
 
   // Global keyboard shortcut for command palette
   useEffect(() => {
@@ -182,33 +74,6 @@ export default function Dashboard() {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
-
-  const loadSessions = async () => {
-    try {
-      if (!loading) setLoading(true); // Only show loading on manual refresh
-      setError("");
-
-      const response = await whatsappApi.getAllSessions();
-
-      if (response.success && response.data) {
-        setSessions(response.data);
-        if (!loading) {
-          success("Sessions refreshed", "Data updated successfully");
-        }
-      } else {
-        const errorMsg = response.error || "Failed to load sessions";
-        setError(errorMsg);
-        showError("Failed to load sessions", errorMsg);
-      }
-    } catch (err) {
-      const errorMsg =
-        err instanceof Error ? err.message : "Failed to load sessions";
-      setError(errorMsg);
-      showError("Connection error", errorMsg);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getSessionStats = () => {
     const total = sessions.length;
@@ -224,7 +89,6 @@ export default function Dashboard() {
   };
 
   const stats = getSessionStats();
-  const readySessions = sessions.filter((s) => s.status === "ready");
 
   return (
     <div className="min-h-screen bg-github-canvas">
@@ -409,7 +273,7 @@ export default function Dashboard() {
 
               {/* API Documentation Card */}
               <a
-                href="http://localhost:6001/api-docs"
+                href="http://localhost:3001/api-docs"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group block"
@@ -417,19 +281,19 @@ export default function Dashboard() {
                 <div className="relative bg-github-canvas-subtle border border-github-border-default rounded-lg p-6 hover:shadow-lg hover:shadow-[#f85149]/10 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-[#f85149]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <div className="relative">
-                    <div className="w-12 h-12 bg-gradient-to-r from-[#f85149] to-[#ffab40] rounded-lg flex items-center justify-center text-white text-xl mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-r from-[#f85149] to-[#ff8170] rounded-lg flex items-center justify-center text-white text-xl mb-4">
                       📚
                     </div>
                     <h3 className="text-lg font-semibold text-github-fg-default mb-2">
                       API Documentation
                     </h3>
                     <p className="text-github-fg-muted text-sm mb-4">
-                      Explore the REST API endpoints and test functionality
+                      Explore the API endpoints and integrate with your apps
                     </p>
                     <div className="flex items-center text-[#f85149] text-sm font-medium">
                       View Docs
                       <span className="ml-2 group-hover:translate-x-1 transition-transform duration-200">
-                        ↗
+                        →
                       </span>
                     </div>
                   </div>
@@ -438,97 +302,67 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Active Sessions Sidebar */}
-          <div>
+          {/* Right Sidebar */}
+          <div className="lg:col-span-1">
             <h2 className="text-xl font-semibold text-github-fg-default mb-6 flex items-center gap-2">
-              <span>📱</span>
-              Active Sessions
+              <span>⚙️</span>
+              Overview
             </h2>
 
-            <div className="bg-github-canvas-subtle border border-github-border-default rounded-lg overflow-hidden">
-              {loading ? (
-                <div className="p-6">
-                  <div className="space-y-4">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-github-canvas-default rounded animate-pulse"></div>
-                        <div className="flex-1 space-y-2">
-                          <div className="h-4 bg-github-canvas-default rounded animate-pulse"></div>
-                          <div className="h-3 bg-github-canvas-default rounded w-2/3 animate-pulse"></div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : sessions.length === 0 ? (
-                <div className="p-8 text-center">
-                  <div className="text-4xl mb-4 opacity-50">📱</div>
-                  <h3 className="font-medium text-github-fg-default mb-2">
-                    No Sessions Yet
-                  </h3>
-                  <p className="text-sm text-github-fg-muted mb-4">
-                    Create your first session to get started
-                  </p>
-                  <Link
-                    href="/setup"
-                    className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#1f6feb] to-[#58a6ff] text-white rounded-lg hover:from-[#1a5feb] hover:to-[#4fa6ff] transition-all duration-200"
-                  >
-                    Create Session
-                  </Link>
-                </div>
-              ) : (
-                <div className="divide-y divide-github-border-muted">
-                  {sessions.slice(0, 5).map((session) => (
-                    <div
-                      key={session.id}
-                      className="p-4 hover:bg-github-canvas-inset transition-colors duration-200"
-                    >
-                      <ConnectionStatus session={session} compact />
-                      {session.status === "ready" && (
-                        <div className="mt-3 flex gap-2">
-                          <Link
-                            href={`/send?sessionId=${session.id}`}
-                            className="flex-1 px-3 py-1.5 bg-[#238636]/10 text-[#238636] rounded text-xs font-medium hover:bg-[#238636]/20 transition-colors duration-200 text-center"
-                          >
-                            Send Message
-                          </Link>
-                          <Link
-                            href={`/status?sessionId=${session.id}`}
-                            className="flex-1 px-3 py-1.5 bg-[#1f6feb]/10 text-[#1f6feb] rounded text-xs font-medium hover:bg-[#1f6feb]/20 transition-colors duration-200 text-center"
-                          >
-                            Details
-                          </Link>
-                        </div>
-                      )}
-                    </div>
+            <div className="bg-github-canvas-subtle border border-github-border-default rounded-lg p-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-github-fg-muted">Connection:</span>
+                  {sessions.map(session => (
+                    <ConnectionStatus key={session.id} session={session} />
                   ))}
-
-                  {sessions.length > 5 && (
-                    <div className="p-4 bg-github-canvas-inset">
-                      <Link
-                        href="/status"
-                        className="block text-center text-sm text-[#1f6feb] hover:text-[#58a6ff] transition-colors duration-200"
-                      >
-                        View all {sessions.length} sessions →
-                      </Link>
-                    </div>
-                  )}
                 </div>
-              )}
+                <div className="flex items-center justify-between">
+                  <span className="text-github-fg-muted">Total Sessions:</span>
+                  <span className="text-github-fg-default font-medium">
+                    {stats.total}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-github-fg-muted">Ready Sessions:</span>
+                  <span className="text-github-fg-default font-medium">
+                    {stats.ready}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-github-fg-muted">Disconnected:</span>
+                  <span className="text-github-fg-default font-medium">
+                    {stats.disconnected}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-github-fg-muted">Last Refresh:</span>
+                  <span className="text-github-fg-default font-medium">
+                    {new Date().toLocaleTimeString()}
+                  </span>
+                </div>
+                <div className="pt-4 border-t border-github-border-muted">
+                  <p className="text-sm text-github-fg-muted">
+                    Manage your WhatsApp sessions efficiently from this dashboard.
+                    Use the quick actions to set up new sessions or send messages.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Toast Notifications */}
-      <ToastContainer toasts={toasts} onRemove={removeToast} />
-
-      {/* Command Palette */}
       <CommandPalette
         isOpen={commandPaletteOpen}
         onClose={() => setCommandPaletteOpen(false)}
-        sessions={sessions}
+        sessions={sessions.map(s => ({
+        id: s.id,
+        status: s.status
+      }))}
       />
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   );
 }
+
