@@ -5,8 +5,8 @@ dotenv.config();
 export const config = {
   port: parseInt(process.env.PORT || "3001", 10),
   nodeEnv: process.env.NODE_ENV || "development",
-  apiBaseUrl: process.env.API_BASE_URL || "http://localhost:6001/api",
-  corsOrigin: process.env.CORS_ORIGIN || "http://localhost:6000",
+  apiBaseUrl: process.env.API_BASE_URL || "http://localhost:3001/api",
+  corsOrigin: process.env.CORS_ORIGIN || "http://localhost:3000",
   sessionPath: process.env.SESSION_PATH || "./sessions",
   maxSessions: parseInt(process.env.MAX_SESSIONS || "10", 10),
   uploadPath: process.env.UPLOAD_PATH || "./uploads",

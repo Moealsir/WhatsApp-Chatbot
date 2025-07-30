@@ -70,7 +70,7 @@ export default function RootLayout({
                   Status
                 </a>
                 <a
-                  href="http://localhost:6001/api-docs"
+                  href="http://localhost:3001/api-docs"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-4 py-2 text-sm font-medium text-github-fg-muted hover:text-github-fg-default hover:bg-github-canvas-inset rounded-lg transition-all duration-200 flex items-center gap-2"
@@ -128,7 +128,7 @@ export default function RootLayout({
                 Status
               </a>
               <a
-                href="http://localhost:6001/api-docs"
+                href="http://localhost:3001/api-docs"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block px-3 py-2 text-sm font-medium text-github-fg-muted hover:text-github-fg-default hover:bg-github-canvas-inset rounded-md transition-all duration-200 flex items-center gap-2"
@@ -186,7 +186,7 @@ export default function RootLayout({
                     Monitor Sessions
                   </a>
                   <a
-                    href="http://localhost:6001/api-docs"
+                    href="http://localhost:3001/api-docs"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block text-sm text-github-fg-muted hover:text-[#1f6feb] transition-colors duration-200"
@@ -228,9 +228,9 @@ export default function RootLayout({
                   GitHub-inspired design
                 </p>
                 <div className="flex items-center gap-4 text-xs text-github-fg-subtle">
-                  <span>Backend: :6001</span>
+                  <span>Backend: :3001</span>
                   <span>•</span>
-                  <span>Frontend: :6000</span>
+                  <span>Frontend: :3000</span>
                 </div>
               </div>
             </div>
